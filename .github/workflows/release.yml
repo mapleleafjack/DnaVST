@@ -1,0 +1,190 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Get version from tag
+      id: get_version
+      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: DNA Visualiser ${{ steps.get_version.outputs.version }}
+        draft: false
+        prerelease: false
+        body: |
+          ## DNA Visualiser ${{ steps.get_version.outputs.version }}
+          
+          ### Downloads
+          - **macOS**: DNAVisualiser-macOS-${{ steps.get_version.outputs.version }}.zip
+          - **Windows**: DNAVisualiser-Windows-${{ steps.get_version.outputs.version }}.zip
+          - **Linux**: DNAVisualiser-Linux-${{ steps.get_version.outputs.version }}.zip
+          
+          ### Installation
+          #### macOS
+          - VST3: `~/Library/Audio/Plug-Ins/VST3/`
+          - AU: `~/Library/Audio/Plug-Ins/Components/`
+          - Standalone: `/Applications/`
+          
+          #### Windows
+          - VST3: `C:\Program Files\Common Files\VST3\`
+          - Standalone: Any location
+          
+          #### Linux
+          - VST3: `~/.vst3/`
+          - Standalone: Any location
+
+  build-and-upload-macos:
+    name: Build and Upload macOS
+    needs: create-release
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+    
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+    
+    - name: Build
+      run: |
+        cmake --build build --config Release --parallel
+    
+    - name: Package DNAVisualiser
+      run: |
+        mkdir -p package/DNAVisualiser
+        cp -r build/DNAVisualiser_artefacts/Release/VST3/*.vst3 package/DNAVisualiser/ 2>/dev/null || true
+        cp -r build/DNAVisualiser_artefacts/Release/AU/*.component package/DNAVisualiser/ 2>/dev/null || true
+        cp -r build/DNAVisualiser_artefacts/Release/Standalone/*.app package/DNAVisualiser/ 2>/dev/null || true
+        cd package && zip -r DNAVisualiser-macOS-${{ needs.create-release.outputs.version }}.zip DNAVisualiser
+    
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./package/DNAVisualiser-macOS-${{ needs.create-release.outputs.version }}.zip
+        asset_name: DNAVisualiser-macOS-${{ needs.create-release.outputs.version }}.zip
+        asset_content_type: application/zip
+
+  build-and-upload-windows:
+    name: Build and Upload Windows
+    needs: create-release
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+    
+    - name: Build
+      run: |
+        cmake --build build --config Release --parallel
+    
+    - name: Package DNAVisualiser
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path package/DNAVisualiser
+        Copy-Item -Path "build/DNAVisualiser_artefacts/Release/VST3/*.vst3" -Destination "package/DNAVisualiser/" -Recurse -ErrorAction SilentlyContinue
+        Copy-Item -Path "build/DNAVisualiser_artefacts/Release/Standalone/*.exe" -Destination "package/DNAVisualiser/" -ErrorAction SilentlyContinue
+        Compress-Archive -Path "package/DNAVisualiser" -DestinationPath "package/DNAVisualiser-Windows-${{ needs.create-release.outputs.version }}.zip"
+    
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./package/DNAVisualiser-Windows-${{ needs.create-release.outputs.version }}.zip
+        asset_name: DNAVisualiser-Windows-${{ needs.create-release.outputs.version }}.zip
+        asset_content_type: application/zip
+
+  build-and-upload-linux:
+    name: Build and Upload Linux
+    needs: create-release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libasound2-dev \
+          libjack-jackd2-dev \
+          ladspa-sdk \
+          libcurl4-openssl-dev \
+          libfreetype6-dev \
+          libx11-dev \
+          libxcomposite-dev \
+          libxcursor-dev \
+          libxcursor-dev \
+          libxext-dev \
+          libxinerama-dev \
+          libxrandr-dev \
+          libxrender-dev \
+          libwebkit2gtk-4.0-dev \
+          libglu1-mesa-dev \
+          mesa-common-dev
+    
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+    
+    - name: Build
+      run: |
+        cmake --build build --config Release --parallel
+    
+    - name: Package DNAVisualiser
+      run: |
+        mkdir -p package/DNAVisualiser
+        cp -r build/DNAVisualiser_artefacts/Release/VST3/*.vst3 package/DNAVisualiser/ 2>/dev/null || true
+        cp build/DNAVisualiser_artefacts/Release/Standalone/* package/DNAVisualiser/ 2>/dev/null || true
+        cd package && zip -r DNAVisualiser-Linux-${{ needs.create-release.outputs.version }}.zip DNAVisualiser
+    
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./package/DNAVisualiser-Linux-${{ needs.create-release.outputs.version }}.zip
+        asset_name: DNAVisualiser-Linux-${{ needs.create-release.outputs.version }}.zip
+        asset_content_type: application/zip

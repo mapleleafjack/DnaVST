@@ -2,6 +2,7 @@
 
 A real-time audio visualization plugin that creates a stunning DNA helix effect driven by audio input. Built with JUCE framework.
 
+![Build](https://github.com/mapleleafjack/DnaVST/workflows/Build/badge.svg)
 ![Version](https://img.shields.io/badge/version-0.0.1-blue)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
