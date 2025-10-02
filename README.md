@@ -41,7 +41,7 @@ A real-time audio visualization plugin that creates a stunning DNA helix effect 
 
 ### Pre-built Binaries
 
-1. Download the latest release from the [Releases](https://github.com/TheAudioProgrammer/JuceAudioPluginTemplate/releases) page
+1. Download the latest release from the [Releases](https://github.com/mapleleafjack/DnaVST/releases) page
 2. Extract the archive
 3. Copy the plugin files to your plugin directory:
    - **macOS VST3**: `~/Library/Audio/Plug-Ins/VST3/`
@@ -65,8 +65,8 @@ A real-time audio visualization plugin that creates a stunning DNA helix effect 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/TheAudioProgrammer/JuceAudioPluginTemplate.git
-   cd JuceAudioPluginTemplate
+   git clone https://github.com/mapleleafjack/DnaVST.git
+   cd DnaVST
    ```
 
 2. **Build the plugin**
@@ -126,7 +126,7 @@ A real-time audio visualization plugin that creates a stunning DNA helix effect 
 ## Project Structure
 
 ```
-JuceAudioPluginTemplate/
+DnaVST/
 ├── CMakeLists.txt          # CMake configuration
 ├── README.md               # This file
 ├── Source/                 # Source code
@@ -197,13 +197,12 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - **Developer**: Jack Musajo
 - **Framework**: JUCE by JUCE
-- **Template**: Based on [TheAudioProgrammer's JUCE Plugin Template](https://github.com/TheAudioProgrammer/JuceAudioPluginTemplate)
 
 ## Support
 
 For issues, questions, or suggestions:
-- Open an issue on [GitHub](https://github.com/TheAudioProgrammer/JuceAudioPluginTemplate/issues)
-- Contact: [Your contact information]
+- Open an issue on [GitHub](https://github.com/mapleleafjack/DnaVST/issues)
+- Contact: jack@mapleleafjack.com
 
 ## Changelog
 
