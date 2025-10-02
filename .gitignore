@@ -61,3 +61,4 @@ juce_binarydata_*/
 # OS
 Thumbs.db
 *.log
+release-package/
