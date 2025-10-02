@@ -1,6 +1,7 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_dsp/juce_dsp.h>
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -42,7 +43,22 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    //==============================================================================
+    // DNA Animation Parameters
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    juce::AudioProcessorValueTreeState apvts;
+    
+    // Audio analysis
+    void updateAmplitudes(const juce::AudioBuffer<float>& buffer);
+    const float* getAmplitudes() const { return amplitudes; }
+    
+    static constexpr int NUM_BANDS = 32;
+
 private:
     //==============================================================================
+    // Amplitude bands for visualization
+    float amplitudes[NUM_BANDS] = {0};
+    float smoothedAmplitudes[NUM_BANDS] = {0};
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

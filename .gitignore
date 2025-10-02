@@ -33,7 +33,31 @@
 
 .DS_Store
 .idea/
+.vscode/
+.vs/
+*.swp
+*.swo
+*~
+
+# CMake
 Build/
 build/
 Builds/
 builds/
+cmake-build-*/
+CMakeUserPresets.json
+
+# IDE
+.clion/
+*.user
+*.suo
+*.vcxproj.filters
+*.vcxproj.user
+
+# Build artifacts
+*_artefacts/
+juce_binarydata_*/
+
+# OS
+Thumbs.db
+*.log
