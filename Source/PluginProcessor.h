@@ -2,6 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
+#include "Audio/AudioAnalyzer.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -49,16 +50,12 @@ public:
     juce::AudioProcessorValueTreeState apvts;
     
     // Audio analysis
-    void updateAmplitudes(const juce::AudioBuffer<float>& buffer);
-    const float* getAmplitudes() const { return amplitudes; }
-    
-    static constexpr int NUM_BANDS = 32;
+    const float* getAmplitudes() const { return audioAnalyzer.getAmplitudes(); }
+    static constexpr int NUM_BANDS = AudioAnalyzer::NUM_BANDS;
 
 private:
     //==============================================================================
-    // Amplitude bands for visualization
-    float amplitudes[NUM_BANDS] = {0};
-    float smoothedAmplitudes[NUM_BANDS] = {0};
+    AudioAnalyzer audioAnalyzer;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

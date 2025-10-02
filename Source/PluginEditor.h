@@ -1,7 +1,8 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "DNA.h"
+#include "UI/VisualizerComponent.h"
+#include "UI/ControlPanel.h"
 
 //==============================================================================
 class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
@@ -23,35 +24,14 @@ public:
 
 private:
     void toggleControlsVisibility();
-    void setControlsVisible(bool visible);
-    juce::Rectangle<int> getControlPanelBounds() const;
     
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     AudioPluginAudioProcessor& processorRef;
     
-    // DNA Animation
-    std::unique_ptr<DNA> dnaAnimation;
-    
-    // Parameter attachments for real-time updates
-    using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
-    
-    juce::Slider heightGainSlider;
-    juce::Slider rotationSlider;
-    juce::Slider zoomSlider;
-    juce::Slider thicknessSlider;
-    
-    juce::Label heightGainLabel;
-    juce::Label rotationLabel;
-    juce::Label zoomLabel;
-    juce::Label thicknessLabel;
-    
-    std::unique_ptr<SliderAttachment> heightGainAttachment;
-    std::unique_ptr<SliderAttachment> rotationAttachment;
-    std::unique_ptr<SliderAttachment> zoomAttachment;
-    std::unique_ptr<SliderAttachment> thicknessAttachment;
-    
-    bool controlsVisible = false;
+    // UI Components
+    VisualizerComponent visualizer;
+    ControlPanel controlPanel;
     
     // Mouse interaction tracking
     bool isDraggingRotation = false;

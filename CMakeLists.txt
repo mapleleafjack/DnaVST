@@ -38,6 +38,19 @@ set(SourceFiles
         Source/PluginEditor.h
         Source/PluginProcessor.cpp
         Source/PluginProcessor.h
+        Source/Parameters/ParameterIDs.h
+        Source/Parameters/ParameterDefaults.h
+        Source/Audio/AudioAnalyzer.cpp
+        Source/Audio/AudioAnalyzer.h
+        Source/Visualization/ColorScheme.cpp
+        Source/Visualization/ColorScheme.h
+        Source/Visualization/DNARenderer.cpp
+        Source/Visualization/DNARenderer.h
+        Source/UI/VisualizerComponent.cpp
+        Source/UI/VisualizerComponent.h
+        Source/UI/ControlPanel.cpp
+        Source/UI/ControlPanel.h
+        # Legacy files (can be removed after testing)
         Source/DNA.cpp
         Source/DNA.h
 )

@@ -1,35 +1,44 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Parameters/ParameterIDs.h"
+#include "Parameters/ParameterDefaults.h"
 
 //==============================================================================
 juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     
-    // DNA parameters matching the ESP32 project's VisSetting structure
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID("heightGain", 1),
+        juce::ParameterID(ParamIDs::heightGain, 1),
         "Gain",
-        juce::NormalisableRange<float>(0.1f, 5.0f, 0.01f),
-        3.5f));
+        juce::NormalisableRange<float>(ParamDefaults::heightGainMin, 
+                                       ParamDefaults::heightGainMax, 
+                                       ParamDefaults::heightGainStep),
+        ParamDefaults::heightGainDefault));
     
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID("rotation", 1),
+        juce::ParameterID(ParamIDs::rotation, 1),
         "Rotation",
-        juce::NormalisableRange<float>(-180.0f, 180.0f, 0.1f),
-        90.0f));
+        juce::NormalisableRange<float>(ParamDefaults::rotationMin, 
+                                       ParamDefaults::rotationMax, 
+                                       ParamDefaults::rotationStep),
+        ParamDefaults::rotationDefault));
     
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID("zoom", 1),
+        juce::ParameterID(ParamIDs::zoom, 1),
         "Zoom",
-        juce::NormalisableRange<float>(0.5f, 2.0f, 0.01f),
-        1.5f));
+        juce::NormalisableRange<float>(ParamDefaults::zoomMin, 
+                                       ParamDefaults::zoomMax, 
+                                       ParamDefaults::zoomStep),
+        ParamDefaults::zoomDefault));
     
     layout.add(std::make_unique<juce::AudioParameterFloat>(
-        juce::ParameterID("thickness", 1),
+        juce::ParameterID(ParamIDs::thickness, 1),
         "Thickness",
-        juce::NormalisableRange<float>(0.5f, 3.0f, 0.01f),
-        1.0f));
+        juce::NormalisableRange<float>(ParamDefaults::thicknessMin, 
+                                       ParamDefaults::thicknessMax, 
+                                       ParamDefaults::thicknessStep),
+        ParamDefaults::thicknessDefault));
     
     return layout;
 }
@@ -46,12 +55,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                        )
      , apvts(*this, nullptr, "Parameters", createParameterLayout())
 {
-    // Initialize amplitudes
-    for (int i = 0; i < NUM_BANDS; ++i)
-    {
-        amplitudes[i] = 0.0f;
-        smoothedAmplitudes[i] = 0.0f;
-    }
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -174,11 +177,9 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is a visualization-only plugin - just pass audio through
-    // and analyze it for the visualization
-    
-    // Update amplitude analysis for visualization
-    updateAmplitudes(buffer);
+    // This is a visualization-only plugin - pass audio through and analyze
+    float heightGain = apvts.getRawParameterValue(ParamIDs::heightGain)->load();
+    audioAnalyzer.analyzeBuffer(buffer, heightGain);
 }
 
 //==============================================================================
@@ -206,59 +207,6 @@ void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeI
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
     juce::ignoreUnused (data, sizeInBytes);
-}
-
-//==============================================================================
-void AudioPluginAudioProcessor::updateAmplitudes(const juce::AudioBuffer<float>& buffer)
-{
-    const int numSamples = buffer.getNumSamples();
-    const int numChannels = buffer.getNumChannels();
-    
-    if (numSamples == 0 || numChannels == 0)
-        return;
-    
-    // Simple amplitude analysis - divide audio into bands
-    const int samplesPerBand = juce::jmax(1, numSamples / NUM_BANDS);
-    const float heightGain = apvts.getRawParameterValue("heightGain")->load();
-    
-    for (int band = 0; band < NUM_BANDS; ++band)
-    {
-        float sum = 0.0f;
-        int startSample = band * samplesPerBand;
-        int endSample = juce::jmin(startSample + samplesPerBand, numSamples);
-        
-        // Calculate RMS for this band
-        for (int ch = 0; ch < numChannels; ++ch)
-        {
-            for (int i = startSample; i < endSample; ++i)
-            {
-                float sample = buffer.getSample(ch, i);
-                sum += sample * sample;
-            }
-        }
-        
-        float rms = std::sqrt(sum / (float)((endSample - startSample) * numChannels));
-        amplitudes[band] = rms * heightGain;
-        
-        // Adaptive smoothing: faster decay when signal is low to prevent imprinting
-        // Slower smoothing for attack (going up), faster for release (going down)
-        float targetValue = amplitudes[band];
-        if (targetValue > smoothedAmplitudes[band])
-        {
-            // Attack - smooth rise
-            const float attackSmoothing = 0.3f;
-            smoothedAmplitudes[band] = smoothedAmplitudes[band] * attackSmoothing + targetValue * (1.0f - attackSmoothing);
-        }
-        else
-        {
-            // Release - faster decay to prevent imprinting
-            const float releaseSmoothing = 0.7f;
-            smoothedAmplitudes[band] = smoothedAmplitudes[band] * releaseSmoothing + targetValue * (1.0f - releaseSmoothing);
-        }
-        
-        // Clamp to 0..1 range
-        smoothedAmplitudes[band] = juce::jlimit(0.0f, 1.0f, smoothedAmplitudes[band]);
-    }
 }
 
 //==============================================================================
